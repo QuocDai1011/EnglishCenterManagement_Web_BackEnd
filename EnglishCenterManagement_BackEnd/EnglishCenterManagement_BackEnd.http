@@ -1,0 +1,6 @@
+@EnglishCenterManagement_BackEnd_HostAddress = http://localhost:5088
+
+GET {{EnglishCenterManagement_BackEnd_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

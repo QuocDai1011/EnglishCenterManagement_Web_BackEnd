@@ -1,0 +1,42 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+bin/
+obj/
+Debug/
+Release/
+x64/
+x86/
+
+# Rider & VSCode
+.idea/
+.vscode/
+
+# Test results
+TestResult*/
+*.TestResults/
+
+# NuGet packages
+*.nupkg
+*.snupkg
+packages/
+*.nuspec
+
+# Publish output
+publish/
+dist/
+
+# Logs
+*.log
+
+# Configuration
+appsettings.Development.json
+appsettings.Production.json
+
+# Optional: ignore main config if contains secrets
+appsettings.json
