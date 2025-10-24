@@ -1,4 +1,7 @@
-﻿namespace EnglishCenterManagement_BackEnd
+﻿using EnglishCenterManagement_BackEnd.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace EnglishCenterManagement_BackEnd
 {
     public class Program
     {
@@ -22,6 +25,22 @@
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            // ✅ Thêm DbContext vào Dependency Injection container
+            builder.Services.AddDbContext<EnglishCenterManagementDevContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            // Bật CORS (nếu cần dùng frontend)
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
+
 
             var app = builder.Build();
 
