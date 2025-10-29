@@ -29,6 +29,8 @@ namespace EnglishCenterManagement_BackEnd
             // ✅ Thêm DbContext vào Dependency Injection container
             builder.Services.AddDbContext<EnglishCenterManagementDevContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            Console.WriteLine($"Environment: {builder.Environment.EnvironmentName}");
+            Console.WriteLine($"DefaultConnection: {builder.Configuration.GetConnectionString("DefaultConnection")}");
 
             // Bật CORS (nếu cần dùng frontend)
             builder.Services.AddCors(options =>
