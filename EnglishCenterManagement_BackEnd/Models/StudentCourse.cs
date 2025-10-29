@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace EnglishCenterManagement_BackEnd.Models;
 
@@ -21,5 +22,6 @@ public partial class StudentCourse
 
     public virtual Receipt? Receipt { get; set; }
 
+    [JsonIgnore]
     public virtual Student Student { get; set; } = null!;
 }
