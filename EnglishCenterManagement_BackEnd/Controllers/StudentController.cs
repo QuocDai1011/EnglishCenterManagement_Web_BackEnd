@@ -143,5 +143,17 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             return Ok(new { message = "Cập nhật học viên thành công!" });
         }
 
+        // [GET] /api/Student/get-classes/{id}
+        [HttpGet("get-classes/{id}")]
+        public async Task<IActionResult> GetClasses(int id)
+        {
+            var studentClasses = await _context.Students
+                .Include(x => x.Classes)
+                .FirstAsync(s => s.StudentId == id);
+
+            if (studentClasses == null) return NotFound("Không tìm thấy dữ liệu!");
+
+            return Ok(studentClasses);
+        }
     }
 }

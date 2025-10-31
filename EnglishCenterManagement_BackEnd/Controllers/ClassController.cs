@@ -108,13 +108,13 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             }
         }
 
-        // [GET] /api/get-classes/{id}
+        // [GET] /api/Class/get-classes/{id}
         [HttpGet("get-students/{id}")]
         public async Task<IActionResult> GetStudents (int id)
         {
             var studentClasses = await _context.Classes
                 .Include(c => c.Students)
-                .Where(c => c.Students.Any(s => s.StudentId == id))
+                .Where(c => c.ClassId == id)
                 .Select( c => new
                 {
                     c.ClassId,
@@ -130,8 +130,19 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 }
                 )
                 .ToListAsync();
+            if (studentClasses == null) return NotFound("Không tìm thấy dữ liệu!");
 
             return Ok(studentClasses);
         }
+
+        // [GET] /api/get-teachers/{id}
+        //[HttpGet("get-teachers/{id}")]
+        //public async Task<IActionResult> GetTeachers(int id)
+        //{
+        //    var classTeachers =
+        //    {
+
+        //    }
+        //}
     }
 }

@@ -31,17 +31,6 @@ namespace EnglishCenterManagement_BackEnd
             builder.Services.AddDbContext<EnglishCenterManagementDevContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Bật CORS (nếu cần dùng frontend)
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("AllowAll", policy =>
-                {
-                    policy.AllowAnyOrigin()
-                          .AllowAnyHeader()
-                          .AllowAnyMethod();
-                });
-            });
-
             builder.Services.AddControllers()
             .AddJsonOptions(x =>
             {
