@@ -32,6 +32,7 @@ namespace EnglishCenterManagement_BackEnd
             Console.WriteLine($"Environment: {builder.Environment.EnvironmentName}");
             Console.WriteLine($"DefaultConnection: {builder.Configuration.GetConnectionString("DefaultConnection")}");
 
+
             // Bật CORS (nếu cần dùng frontend)
             builder.Services.AddCors(options =>
             {
