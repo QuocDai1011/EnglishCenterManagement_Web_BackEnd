@@ -25,14 +25,18 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             return Ok(classes);
         }
 
-        // [GET] /api/class/get-all-and-courses
-        [HttpGet("get-all-and-courses")]
-        public async Task<IActionResult> GetAllAndCourse()
+        // [GET] /api/class/get-courses-by-id/id
+        [HttpGet("get-courses-by-id/{id}")]
+        public async Task<IActionResult> GetCoursesById(int id)
         {
-            var classes = await _context.Classes
-                .Include(c => c.Courses)
-                .ToListAsync();
-            return Ok(classes);
+            var classWithCourses = await _context.Classes
+               .Include(c => c.Courses)
+               .FirstOrDefaultAsync(c => c.ClassId == id);
+
+            if (classWithCourses == null)
+                return NotFound("Không tìm thấy lớp học!");
+
+            return Ok(classWithCourses.Courses);
         }
 
         // [GET] /api/class/id
@@ -102,6 +106,32 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             {
                 return BadRequest($"Cập nhật khóa học thất bại: {ex.Message}");
             }
+        }
+
+        // [GET] /api/get-classes/{id}
+        [HttpGet("get-students/{id}")]
+        public async Task<IActionResult> GetStudents (int id)
+        {
+            var studentClasses = await _context.Classes
+                .Include(c => c.Students)
+                .Where(c => c.Students.Any(s => s.StudentId == id))
+                .Select( c => new
+                {
+                    c.ClassId,
+                    c.ClassCode,
+                    c.ClassName,
+                    c.MaxStudent,
+                    c.CurrentStudent,
+                    c.StartDate,
+                    c.EndDate,
+                    c.Status,
+                    c.OnlineMeetingLink,
+                    Students = c.Students
+                }
+                )
+                .ToListAsync();
+
+            return Ok(studentClasses);
         }
     }
 }

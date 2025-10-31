@@ -1,4 +1,5 @@
 ﻿using EnglishCenterManagement_BackEnd.Models;
+using EnglishCenterManagement_BackEnd.Service;
 using Microsoft.EntityFrameworkCore;
 
 namespace EnglishCenterManagement_BackEnd
@@ -40,6 +41,16 @@ namespace EnglishCenterManagement_BackEnd
                           .AllowAnyMethod();
                 });
             });
+
+            builder.Services.AddControllers()
+            .AddJsonOptions(x =>
+            {
+                x.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+            });
+
+            builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+            builder.Services.AddSingleton<IEmailService, EmailService>();
+            builder.Services.AddMemoryCache();
 
 
             var app = builder.Build();

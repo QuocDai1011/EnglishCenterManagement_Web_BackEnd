@@ -27,8 +27,6 @@ public partial class Course
     public string AvatarLink { get; set; } = null!;
 
     public virtual ICollection<StudentCourse> StudentCourses { get; set; } = new List<StudentCourse>();
-
-    [JsonIgnore]
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
     public virtual ICollection<Teacher> Teachers { get; set; } = new List<Teacher>();
