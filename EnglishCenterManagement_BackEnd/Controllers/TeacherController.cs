@@ -104,6 +104,21 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             return Ok();
         }
 
+        // [GET] /api/teacher/get-by-username
+        // Get bằng username không được ghi trên url vì độ bảo mật
+        [HttpPost("get-by-username")]
+        public async Task<IActionResult> GetByUsername([FromBody] string username)
+        {
+            if (string.IsNullOrEmpty(username))
+                return BadRequest("Username is required.");
 
+            var student = await _context.Teachers
+                .FirstOrDefaultAsync(s => s.UserName == username);
+
+            if (student == null)
+                return NotFound("Teacher not found.");
+
+            return Ok(student);
+        }
     }
 }

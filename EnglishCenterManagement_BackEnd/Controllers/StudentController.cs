@@ -5,8 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EnglishCenterManagement_BackEnd.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class StudentController : ControllerBase
     {
         private readonly EnglishCenterManagementDevContext _context;
@@ -143,7 +143,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             return Ok(new { message = "Cập nhật học viên thành công!" });
         }
 
-        // [GET] /api/Student/get-classes/{id}
+        //[GET] /api/Student/get-classes/{id}
         [HttpGet("get-classes/{id}")]
         public async Task<IActionResult> GetClasses(int id)
         {
@@ -155,5 +155,34 @@ namespace EnglishCenterManagement_BackEnd.Controllers
 
             return Ok(studentClasses);
         }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Username))
+                return BadRequest("Username is required.");
+
+            if (string.IsNullOrWhiteSpace(request.Password))
+                return BadRequest("Password is required.");
+
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.UserName == request.Username);
+
+            if (student == null)
+                return NotFound("Student not found.");
+
+            if (student.Password != request.Password)
+                return BadRequest("Mật khẩu không chính xác.");
+
+            return Ok(new
+            {
+                student.StudentId,
+                student.FullName,
+                student.Email,
+                student.UserName,
+                Message = "Đăng nhập thành công!"
+            });
+        }
+
     }
 }
