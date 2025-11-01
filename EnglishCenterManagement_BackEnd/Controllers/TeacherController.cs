@@ -120,5 +120,34 @@ namespace EnglishCenterManagement_BackEnd.Controllers
 
             return Ok(student);
         }
+
+        // [POST] /api/admin/login
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Username))
+                return BadRequest("Username is required.");
+
+            if (string.IsNullOrWhiteSpace(request.Password))
+                return BadRequest("Password is required.");
+
+            var teacher = await _context.Teachers
+                .FirstOrDefaultAsync(s => s.UserName == request.Username);
+
+            if (teacher == null)
+                return NotFound("Teacher not found.");
+
+            if (teacher.Password != request.Password)
+                return BadRequest("Mật khẩu không chính xác.");
+
+            return Ok(new
+            {
+                teacher.AdminId,
+                teacher.FullName,
+                teacher.Email,
+                teacher.UserName,
+                Message = "Đăng nhập thành công!"
+            });
+        }
     }
 }

@@ -33,7 +33,33 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             return Ok(student);
         }
 
-        // [GET] /api/admin
-        //public 
+        // [POST] /api/admin/login
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Username))
+                return BadRequest("Username is required.");
+
+            if (string.IsNullOrWhiteSpace(request.Password))
+                return BadRequest("Password is required.");
+
+            var admin = await _context.Admins
+                .FirstOrDefaultAsync(s => s.UserName == request.Username);
+
+            if (admin == null)
+                return NotFound("Admin not found.");
+
+            if (admin.Password != request.Password)
+                return BadRequest("Mật khẩu không chính xác.");
+
+            return Ok(new
+            {
+                admin.AdminId,
+                admin.FullName,
+                admin.Email,
+                admin.UserName,
+                Message = "Đăng nhập thành công!"
+            });
+        }
     }
 }
