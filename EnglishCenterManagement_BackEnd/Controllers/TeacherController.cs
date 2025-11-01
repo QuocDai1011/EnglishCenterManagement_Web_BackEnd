@@ -1,4 +1,5 @@
 ﻿using EnglishCenterManagement_BackEnd.Models;
+using EnglishCenterManagement_BackEnd.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -101,7 +102,12 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 return NotFound("Không tìm thấy thông tin giảng viên.");
             }
 
-            return Ok();
+            teacher = TeacherService.Mapper(teacher, newTeacher);
+
+            _context.Teachers.Update(teacher);
+            await _context.SaveChangesAsync();
+
+            return Ok(new {message = "Cập nhật thông tin giảng viên thành công!"});
         }
 
         // [GET] /api/teacher/get-by-username

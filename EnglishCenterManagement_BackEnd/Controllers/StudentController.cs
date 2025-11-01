@@ -1,4 +1,5 @@
 ﻿using EnglishCenterManagement_BackEnd.Models;
+using EnglishCenterManagement_BackEnd.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -114,7 +115,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
 
         // PUT: api/student/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateStudent(int id, [FromBody] Student updatedStudent)
+        public async Task<IActionResult> Update(int id, [FromBody] Student updatedStudent)
         {
             var student = await _context.Students.FindAsync(id);
             if (student == null)
@@ -122,20 +123,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 return NotFound(new { message = "Không tìm thấy sinh viên cần cập nhật" });
             }
 
-            // Cập nhật các thuộc tính cần thay đổi
-            student.FullName = updatedStudent.FullName;
-            student.UserName = updatedStudent.UserName;
-            student.Password = updatedStudent.Password;
-            student.Email = updatedStudent.Email;
-            student.Gender = updatedStudent.Gender;
-            student.Address = updatedStudent.Address;
-            student.DateOfBirth = updatedStudent.DateOfBirth;
-            student.PhoneNumber = updatedStudent.PhoneNumber;
-            student.PhoneNumberOfParents = updatedStudent.PhoneNumberOfParents;
-            student.UpdateAt = DateOnly.FromDateTime(DateTime.Now);
-            student.IsActive = updatedStudent.IsActive;
-
-            
+            student = StudentService.Mapper(student, updatedStudent);
 
             _context.Students.Update(student);
             await _context.SaveChangesAsync();
