@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace EnglishCenterManagement_BackEnd.Models;
 
@@ -26,7 +27,6 @@ public partial class Course
     public string AvatarLink { get; set; } = null!;
 
     public virtual ICollection<StudentCourse> StudentCourses { get; set; } = new List<StudentCourse>();
-
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
     public virtual ICollection<Teacher> Teachers { get; set; } = new List<Teacher>();

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace EnglishCenterManagement_BackEnd.Controllers
 {
@@ -21,7 +22,9 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var students = await _context.Students.ToListAsync();
+            var students = await _context.Students
+                .Include(s => s.StudentCourses)
+                .ToListAsync();
             return Ok(students);
         }
 
@@ -86,7 +89,6 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 return CreatedAtAction(nameof(GetById), new {id = newStudent.StudentId}, newStudent);
             }
             catch (Exception ex) {
-                var inner = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
@@ -101,16 +103,42 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 return NotFound(new { message = "Không tìm thấy sinh viên cần xóa" });
             }
 
-            _context.Students.Remove(student);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Students.Remove(student);
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Xóa học viên thành công!" });
+            }catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
 
-            return Ok(new { message = "Xóa học viên thành công!" });
         }
 
         // PUT: api/student/{id}
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateStudent(int id, [FromBody] Student updatedStudent)
         {
+            // Log để xem data thực tế nhận được
+            Console.WriteLine("Received JSON: " + json.ToString());
+
+            // Deserialize manually
+            updatedStudent = JsonSerializer.Deserialize<Student>(json.GetRawText(), new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (updatedStudent == null)
+            {
+                return BadRequest("Cannot deserialize student data");
+            }
+
+            var student = await _context.Students.FindAsync(id);
+            if (student == null)
+            {
+                return NotFound(new { message = "Không tìm thấy sinh viên cần cập nhật" });
+            }
+
             var student = await _context.Students.FindAsync(id);
             if (student == null)
             {
@@ -130,11 +158,25 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             student.UpdateAt = DateOnly.FromDateTime(DateTime.Now);
             student.IsActive = updatedStudent.IsActive;
 
-            _context.Students.Update(student);
+            
+
+            //_context.Students.Update(student);
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Cập nhật học viên thành công!" });
         }
 
+        // [GET] /api/Student/get-classes/{id}
+        [HttpGet("get-classes/{id}")]
+        public async Task<IActionResult> GetClasses(int id)
+        {
+            var studentClasses = await _context.Students
+                .Include(x => x.Classes)
+                .FirstAsync(s => s.StudentId == id);
+
+            if (studentClasses == null) return NotFound("Không tìm thấy dữ liệu!");
+
+            return Ok(studentClasses);
+        }
     }
 }

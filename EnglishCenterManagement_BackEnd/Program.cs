@@ -1,4 +1,6 @@
+
 ﻿using EnglishCenterManagement_BackEnd.Models;
+using EnglishCenterManagement_BackEnd.Service;
 using Microsoft.EntityFrameworkCore;
 
 namespace EnglishCenterManagement_BackEnd
@@ -29,20 +31,16 @@ namespace EnglishCenterManagement_BackEnd
             // ✅ Thêm DbContext vào Dependency Injection container
             builder.Services.AddDbContext<EnglishCenterManagementDevContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-            Console.WriteLine($"Environment: {builder.Environment.EnvironmentName}");
-            Console.WriteLine($"DefaultConnection: {builder.Configuration.GetConnectionString("DefaultConnection")}");
 
-
-            // Bật CORS (nếu cần dùng frontend)
-            builder.Services.AddCors(options =>
+            builder.Services.AddControllers()
+            .AddJsonOptions(x =>
             {
-                options.AddPolicy("AllowAll", policy =>
-                {
-                    policy.AllowAnyOrigin()
-                          .AllowAnyHeader()
-                          .AllowAnyMethod();
-                });
+                x.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
             });
+
+            builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+            builder.Services.AddSingleton<IEmailService, EmailService>();
+            builder.Services.AddMemoryCache();
 
 
             var app = builder.Build();
