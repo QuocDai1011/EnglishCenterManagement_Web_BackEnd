@@ -42,6 +42,8 @@ namespace EnglishCenterManagement_BackEnd
             builder.Services.AddSingleton<IEmailService, EmailService>();
             builder.Services.AddMemoryCache();
 
+            builder.Services.AddScoped<IChatService, ChatService>();
+
 
             var app = builder.Build();
 

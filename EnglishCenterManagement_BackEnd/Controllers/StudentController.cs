@@ -1,13 +1,13 @@
 ﻿using EnglishCenterManagement_BackEnd.Models;
+using EnglishCenterManagement_BackEnd.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 namespace EnglishCenterManagement_BackEnd.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class StudentController : ControllerBase
     {
         private readonly EnglishCenterManagementDevContext _context;
@@ -16,7 +16,6 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         {
             _context = context;
         }
-
 
         //[GET] /api/student
         [HttpGet]
@@ -27,7 +26,6 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 .ToListAsync();
             return Ok(students);
         }
-
 
         //[GET] /api/student/{id}
         [HttpGet("{id}")] 
@@ -117,48 +115,15 @@ namespace EnglishCenterManagement_BackEnd.Controllers
 
         // PUT: api/student/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateStudent(int id, [FromBody] Student updatedStudent)
+        public async Task<IActionResult> Update(int id, [FromBody] Student updatedStudent)
         {
-            // Log để xem data thực tế nhận được
-            Console.WriteLine("Received JSON: " + json.ToString());
-
-            // Deserialize manually
-            updatedStudent = JsonSerializer.Deserialize<Student>(json.GetRawText(), new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            if (updatedStudent == null)
-            {
-                return BadRequest("Cannot deserialize student data");
-            }
-
             var student = await _context.Students.FindAsync(id);
             if (student == null)
             {
                 return NotFound(new { message = "Không tìm thấy sinh viên cần cập nhật" });
             }
 
-            var student = await _context.Students.FindAsync(id);
-            if (student == null)
-            {
-                return NotFound(new { message = "Không tìm thấy sinh viên cần cập nhật" });
-            }
-
-            // Cập nhật các thuộc tính cần thay đổi
-            student.FullName = updatedStudent.FullName;
-            student.UserName = updatedStudent.UserName;
-            student.Password = updatedStudent.Password;
-            student.Email = updatedStudent.Email;
-            student.Gender = updatedStudent.Gender;
-            student.Address = updatedStudent.Address;
-            student.DateOfBirth = updatedStudent.DateOfBirth;
-            student.PhoneNumber = updatedStudent.PhoneNumber;
-            student.PhoneNumberOfParents = updatedStudent.PhoneNumberOfParents;
-            student.UpdateAt = DateOnly.FromDateTime(DateTime.Now);
-            student.IsActive = updatedStudent.IsActive;
-
-            
+            student = StudentService.Mapper(student, updatedStudent);
 
             //_context.Students.Update(student);
             await _context.SaveChangesAsync();
@@ -166,7 +131,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             return Ok(new { message = "Cập nhật học viên thành công!" });
         }
 
-        // [GET] /api/Student/get-classes/{id}
+        //[GET] /api/Student/get-classes/{id}
         [HttpGet("get-classes/{id}")]
         public async Task<IActionResult> GetClasses(int id)
         {
@@ -177,6 +142,34 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             if (studentClasses == null) return NotFound("Không tìm thấy dữ liệu!");
 
             return Ok(studentClasses);
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Username))
+                return BadRequest("Username is required.");
+
+            if (string.IsNullOrWhiteSpace(request.Password))
+                return BadRequest("Password is required.");
+
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.UserName == request.Username);
+
+            if (student == null)
+                return NotFound("Student not found.");
+
+            if (student.Password != request.Password)
+                return BadRequest("Mật khẩu không chính xác.");
+
+            return Ok(new
+            {
+                student.StudentId,
+                student.FullName,
+                student.Email,
+                student.UserName,
+                Message = "Đăng nhập thành công!"
+            });
         }
     }
 }

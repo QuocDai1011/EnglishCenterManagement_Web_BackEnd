@@ -1,4 +1,5 @@
 ﻿using EnglishCenterManagement_BackEnd.Models;
+using EnglishCenterManagement_BackEnd.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -101,9 +102,58 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 return NotFound("Không tìm thấy thông tin giảng viên.");
             }
 
-            return Ok();
+            teacher = TeacherService.Mapper(teacher, newTeacher);
+
+            _context.Teachers.Update(teacher);
+            await _context.SaveChangesAsync();
+
+            return Ok(new {message = "Cập nhật thông tin giảng viên thành công!"});
         }
 
+        // [GET] /api/teacher/get-by-username
+        // Get bằng username không được ghi trên url vì độ bảo mật
+        [HttpPost("get-by-username")]
+        public async Task<IActionResult> GetByUsername([FromBody] string username)
+        {
+            if (string.IsNullOrEmpty(username))
+                return BadRequest("Username is required.");
 
+            var student = await _context.Teachers
+                .FirstOrDefaultAsync(s => s.UserName == username);
+
+            if (student == null)
+                return NotFound("Teacher not found.");
+
+            return Ok(student);
+        }
+
+        // [POST] /api/admin/login
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Username))
+                return BadRequest("Username is required.");
+
+            if (string.IsNullOrWhiteSpace(request.Password))
+                return BadRequest("Password is required.");
+
+            var teacher = await _context.Teachers
+                .FirstOrDefaultAsync(s => s.UserName == request.Username);
+
+            if (teacher == null)
+                return NotFound("Teacher not found.");
+
+            if (teacher.Password != request.Password)
+                return BadRequest("Mật khẩu không chính xác.");
+
+            return Ok(new
+            {
+                teacher.AdminId,
+                teacher.FullName,
+                teacher.Email,
+                teacher.UserName,
+                Message = "Đăng nhập thành công!"
+            });
+        }
     }
 }

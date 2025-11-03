@@ -98,7 +98,6 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             try
             {
                 _class = ClassService.Mapper(_class, updatedClass);
-                //_context.Classes.Update(updatedClass);
                 await _context.SaveChangesAsync();
                 return Ok("Cập nhật lớp học thành công!");
             }
