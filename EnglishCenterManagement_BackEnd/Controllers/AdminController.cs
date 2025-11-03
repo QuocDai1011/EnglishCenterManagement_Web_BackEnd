@@ -160,5 +160,62 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 return StatusCode(500, "Error: " + ex.Message);
             }
         }
+
+        // Xóa mềm admin (set isActive = false)
+        [HttpPatch("{id}/soft-delete")]
+        public async Task<IActionResult> DeactivateAdmin(int id)
+        {
+            var admin = await _context.Admins.FindAsync(id);
+            if (admin == null)
+            {
+                return NotFound(new { message = "Không tìm thấy admin" });
+            }
+
+            if (!admin.IsActive)
+            {
+                return BadRequest(new { message = "Admin đã bị xóa trước đó" });
+            }
+
+            if(admin.IsSuper)
+            {
+                return Conflict(new { message = "Không thể xóa admin cơ sở." });
+            }
+
+            admin.IsActive = false;
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Xóa mềm giảng viên thành công!",
+                studentId = admin.AdminId,
+                isActive = admin.IsActive
+            });
+        }
+
+        // Khôi phục admin (set isActive = true)
+        [HttpPatch("{id}/restore")]
+        public async Task<IActionResult> ActivateAdmin(int id)
+        {
+            var teacher = await _context.Teachers.FindAsync(id);
+            if (teacher == null)
+            {
+                return NotFound(new { message = "Không tìm thấy admin" });
+            }
+
+            if (teacher.IsActive)
+            {
+                return BadRequest(new { message = "Admin đang ở trạng thái hoạt động" });
+            }
+
+            teacher.IsActive = true;
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Khôi phục admin thành công!",
+                studentId = teacher.AdminId,
+                isActive = teacher.IsActive
+            });
+        }
     }
 }

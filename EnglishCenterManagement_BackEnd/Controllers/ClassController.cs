@@ -22,6 +22,8 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         public async Task<IActionResult> GetAll()
         {
             var classes = await _context.Classes.ToListAsync();
+            classes = ClassService.AutoSetStatus(classes);
+            await _context.SaveChangesAsync();
             return Ok(classes);
         }
 
