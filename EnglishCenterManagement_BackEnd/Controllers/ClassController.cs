@@ -164,5 +164,34 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             if (classCourses == null) return NotFound(new {message = "Không tìm thấy dữ liệu."});
             return Ok(classCourses);
         }
+
+        // [GET] /api/class/get-teachers/{id}
+        [HttpGet("get-teachers/{id}")]
+        public async Task<IActionResult> GetTeachers(int id)
+        {
+            var classTeacher = await _context.Classes
+                .Include(c => c.Teachers)
+                .Select(c => new 
+                {
+                    c.ClassId,
+                    c.ClassCode,
+                    c.ClassName,
+                    c.MaxStudent,
+                    c.CurrentStudent,
+                    c.StartDate,
+                    c.EndDate,
+                    c.Shift,
+                    c.Status,
+                    c.Note,
+                    c.CreateAt,
+                    c.OnlineMeetingLink,
+                    Teachers = c.Teachers
+                })
+                .ToListAsync();
+
+            if (classTeacher == null) return NotFound(new { message = "Không tìm thấy dữ liệu." });
+            return Ok(classTeacher);
+        }
+        
     }
 }
