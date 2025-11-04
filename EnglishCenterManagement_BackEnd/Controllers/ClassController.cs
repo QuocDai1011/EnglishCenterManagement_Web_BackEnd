@@ -136,14 +136,33 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             return Ok(studentClasses);
         }
 
-        // [GET] /api/get-teachers/{id}
-        //[HttpGet("get-teachers/{id}")]
-        //public async Task<IActionResult> GetTeachers(int id)
-        //{
-        //    var classTeachers =
-        //    {
+        // [GET] /api/class/get-courses/{id}
+        [HttpGet("get-courses/{id}")]
+        public async Task<IActionResult> GetCourses (int id)
+        {
+            var classCourses = await _context.Classes
+                .Include(c => c.Courses)
+                .Where(c => c.ClassId == id)
+                .Select(c => new
+                {
+                    c.ClassId,
+                    c.ClassCode,
+                    c.ClassName,
+                    c.MaxStudent,
+                    c.CurrentStudent,
+                    c.StartDate,
+                    c.EndDate,
+                    c.Shift,
+                    c.Status,
+                    c.Note,
+                    c.CreateAt,
+                    c.OnlineMeetingLink,
+                    Courses = c.Courses
+                })
+                .ToListAsync();
 
-        //    }
-        //}
+            if (classCourses == null) return NotFound(new {message = "Không tìm thấy dữ liệu."});
+            return Ok(classCourses);
+        }
     }
 }
