@@ -171,6 +171,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         {
             var classTeacher = await _context.Classes
                 .Include(c => c.Teachers)
+                .Where (c => c.ClassId == id)
                 .Select(c => new 
                 {
                     c.ClassId,
