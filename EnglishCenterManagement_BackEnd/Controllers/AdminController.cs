@@ -38,14 +38,14 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.Username))
+            if (string.IsNullOrWhiteSpace(request.Email))
                 return BadRequest("Username is required.");
 
             if (string.IsNullOrWhiteSpace(request.Password))
                 return BadRequest("Password is required.");
 
             var admin = await _context.Admins
-                .FirstOrDefaultAsync(s => s.UserName == request.Username);
+                .FirstOrDefaultAsync(s => s.Email == request.Email);
 
             if (admin == null)
                 return NotFound("Admin not found.");
