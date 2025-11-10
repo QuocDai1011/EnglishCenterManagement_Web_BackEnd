@@ -147,14 +147,14 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.Email))
+            if (string.IsNullOrWhiteSpace(request.Username))
                 return BadRequest("Username is required.");
 
             if (string.IsNullOrWhiteSpace(request.Password))
                 return BadRequest("Password is required.");
 
             var student = await _context.Students
-                .FirstOrDefaultAsync(s => s.UserName == request.Email);
+                .FirstOrDefaultAsync(s => s.UserName == request.Username);
 
             if (student == null)
                 return NotFound("Student not found.");
