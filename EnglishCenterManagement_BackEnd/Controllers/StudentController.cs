@@ -1,3 +1,4 @@
+
 ﻿using EnglishCenterManagement_BackEnd.Models;
 using EnglishCenterManagement_BackEnd.Service;
 using Microsoft.AspNetCore.Http;
@@ -125,7 +126,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
 
             student = StudentService.Mapper(student, updatedStudent);
 
-            //_context.Students.Update(student);
+            _context.Students.Update(student);
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Cập nhật học viên thành công!" });
@@ -169,6 +170,58 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 student.Email,
                 student.UserName,
                 Message = "Đăng nhập thành công!"
+            });
+        }
+
+        // Xóa mềm sinh viên (set isActive = false)
+        [HttpPatch("{id}/soft-delete")]
+        public async Task<IActionResult> DeactivateStudent(int id)
+        {
+            var student = await _context.Students.FindAsync(id);
+            if (student == null)
+            {
+                return NotFound(new { message = "Không tìm thấy học viên" });
+            }
+
+            if (!student.IsActive)
+            {
+                return BadRequest(new { message = "Học viên đã bị xóa trước đó" });
+            }
+
+            student.IsActive = false;
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Xóa mềm học viên thành công!",
+                studentId = student.StudentId,
+                isActive = student.IsActive
+            });
+        }
+
+        // Khôi phục sinh viên (set isActive = true)
+        [HttpPatch("{id}/restore")]
+        public async Task<IActionResult> ActivateStudent(int id)
+        {
+            var student = await _context.Students.FindAsync(id);
+            if (student == null)
+            {
+                return NotFound(new { message = "Không tìm thấy học viên" });
+            }
+
+            if (student.IsActive)
+            {
+                return BadRequest(new { message = "Học viên đang ở trạng thái hoạt động" });
+            }
+
+            student.IsActive = true;
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Khôi phục học viên thành công!",
+                studentId = student.StudentId,
+                isActive = student.IsActive
             });
         }
     }
