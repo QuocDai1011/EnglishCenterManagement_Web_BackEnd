@@ -53,7 +53,10 @@ namespace EnglishCenterManagement_BackEnd
                 {
                     policy
                         // Cần liệt kê rõ các domain frontend của bạn
-                        .WithOrigins("http://localhost:5173")
+                        .WithOrigins(
+                            "http://localhost:3000",
+                            "http://localhost:5173"
+                        )
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials(); // BẮT BUỘC để gửi Cookie

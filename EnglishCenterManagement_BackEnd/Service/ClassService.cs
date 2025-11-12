@@ -27,10 +27,11 @@ namespace EnglishCenterManagement_BackEnd.Service
                 if(item.EndDate <= DateOnly.FromDateTime(DateTime.Now))
                 {
                     item.Status = false;
-                }else
-                {
-                    item.Status = true;
                 }
+                //else
+                //{
+                //    item.Status = true;
+                //}
             }
             return classes;
         }
