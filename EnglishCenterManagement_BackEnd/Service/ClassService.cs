@@ -20,5 +20,21 @@ namespace EnglishCenterManagement_BackEnd.Service
 
             return _class;
         }
+
+        public static List<Class> AutoSetStatus(List<Class> classes) { 
+            foreach(var item in classes)
+            {
+                if(item.EndDate <= DateOnly.FromDateTime(DateTime.Now))
+                {
+                    item.Status = false;
+                }else
+                {
+                    item.Status = true;
+                }
+            }
+            return classes;
+        }
     }
+
+    
 }

@@ -16,6 +16,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             _context = context;
         }
 
+        //[GET] /api/studentcourse
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -46,6 +47,46 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             return Ok(studentCourses);
         }
 
-        
+        // [GET] /api/studentcourse/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetByIdOfStudent (int id)
+        {
+            var studentCourse = await _context.StudentCourses
+                .Include(c => c.Course)
+                .Include(c => c.Student)
+                .Where(c => c.StudentId == id)
+                .Select(c => new
+                {
+                    c.StudentId,
+                    c.CourseId,
+                    c.DiscountType,
+                    c.DiscountValue,
+                    c.CreateAt,
+                    Student = new
+                    {
+                        c.Student.FullName,
+                        c.Student.Email
+                    },
+                    Course = new
+                    {
+                        c.Course.CourseName,
+                        c.Course.Level,
+                        c.Course.TutitionFee
+                    }
+                })
+                .ToListAsync();
+            if(studentCourse == null)
+            {
+                return NotFound(new {message = "Không tìm thấy dữ liệu."});
+            }
+            return Ok(studentCourse);
+        }
+
+        //[POST] /api/studentcourse/get-bill
+        //[HttpPost("get-bill")]
+        //public async Task<IActionResult> GetBill([FromBody] StudentCourse studentCourse)
+        //{
+            
+        //}
     }
 }

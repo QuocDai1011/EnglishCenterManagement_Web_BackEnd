@@ -3,6 +3,8 @@ using EnglishCenterManagement_BackEnd.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace EnglishCenterManagement_BackEnd.Controllers
 {
@@ -11,10 +13,12 @@ namespace EnglishCenterManagement_BackEnd.Controllers
     public class ClassController : ControllerBase
     {
         private readonly EnglishCenterManagementDevContext _context;
-
-        public ClassController(EnglishCenterManagementDevContext context)
+        private readonly ILogger<ClassController> logger;
+        public ClassController(EnglishCenterManagementDevContext context, ILogger<ClassController> logger)
         {
             _context = context;
+            this.logger = logger;
+
         }
 
         // [GET] /api/class
@@ -22,6 +26,8 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         public async Task<IActionResult> GetAll()
         {
             var classes = await _context.Classes.ToListAsync();
+            classes = ClassService.AutoSetStatus(classes);
+            await _context.SaveChangesAsync();
             return Ok(classes);
         }
 
@@ -98,6 +104,11 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             try
             {
                 _class = ClassService.Mapper(_class, updatedClass);
+                // Log ra thông tin được gửi tới backend
+                logger.LogInformation("Dữ liệu nhận được: {json}", JsonSerializer.Serialize(_class, new JsonSerializerOptions
+                {
+                    WriteIndented = true // in đẹp dạng JSON
+                }));
                 await _context.SaveChangesAsync();
                 return Ok("Cập nhật lớp học thành công!");
             }
@@ -134,14 +145,63 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             return Ok(studentClasses);
         }
 
-        // [GET] /api/get-teachers/{id}
-        //[HttpGet("get-teachers/{id}")]
-        //public async Task<IActionResult> GetTeachers(int id)
-        //{
-        //    var classTeachers =
-        //    {
+        // [GET] /api/class/get-courses/{id}
+        [HttpGet("get-courses/{id}")]
+        public async Task<IActionResult> GetCourses (int id)
+        {
+            var classCourses = await _context.Classes
+                .Include(c => c.Courses)
+                .Where(c => c.ClassId == id)
+                .Select(c => new
+                {
+                    c.ClassId,
+                    c.ClassCode,
+                    c.ClassName,
+                    c.MaxStudent,
+                    c.CurrentStudent,
+                    c.StartDate,
+                    c.EndDate,
+                    c.Shift,
+                    c.Status,
+                    c.Note,
+                    c.CreateAt,
+                    c.OnlineMeetingLink,
+                    Courses = c.Courses
+                })
+                .ToListAsync();
 
-        //    }
-        //}
+            if (classCourses == null) return NotFound(new {message = "Không tìm thấy dữ liệu."});
+            return Ok(classCourses);
+        }
+
+        // [GET] /api/class/get-teachers/{id}
+        [HttpGet("get-teachers/{id}")]
+        public async Task<IActionResult> GetTeachers(int id)
+        {
+            var classTeacher = await _context.Classes
+                .Include(c => c.Teachers)
+                .Where (c => c.ClassId == id)
+                .Select(c => new 
+                {
+                    c.ClassId,
+                    c.ClassCode,
+                    c.ClassName,
+                    c.MaxStudent,
+                    c.CurrentStudent,
+                    c.StartDate,
+                    c.EndDate,
+                    c.Shift,
+                    c.Status,
+                    c.Note,
+                    c.CreateAt,
+                    c.OnlineMeetingLink,
+                    Teachers = c.Teachers
+                })
+                .ToListAsync();
+
+            if (classTeacher == null) return NotFound(new { message = "Không tìm thấy dữ liệu." });
+            return Ok(classTeacher);
+        }
+        
     }
 }

@@ -131,14 +131,14 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.Username))
+            if (string.IsNullOrWhiteSpace(request.Email))
                 return BadRequest("Username is required.");
 
             if (string.IsNullOrWhiteSpace(request.Password))
                 return BadRequest("Password is required.");
 
             var teacher = await _context.Teachers
-                .FirstOrDefaultAsync(s => s.UserName == request.Username);
+                .FirstOrDefaultAsync(s => s.UserName == request.Email);
 
             if (teacher == null)
                 return NotFound("Teacher not found.");
@@ -153,6 +153,58 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 teacher.Email,
                 teacher.UserName,
                 Message = "Đăng nhập thành công!"
+            });
+        }
+
+        // Xóa mềm giảng viên (set isActive = false)
+        [HttpPatch("{id}/soft-delete")]
+        public async Task<IActionResult> DeactivateTeacher(int id)
+        {
+            var teacher = await _context.Teachers.FindAsync(id);
+            if (teacher == null)
+            {
+                return NotFound(new { message = "Không tìm thấy giảng viên" });
+            }
+
+            if (!teacher.IsActive)
+            {
+                return BadRequest(new { message = "Giảng viên đã bị xóa trước đó" });
+            }
+
+            teacher.IsActive = false;
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Xóa mềm giảng viên thành công!",
+                studentId = teacher.AdminId,
+                isActive = teacher.IsActive
+            });
+        }
+
+        // Khôi phục giảng viên (set isActive = true)
+        [HttpPatch("{id}/restore")]
+        public async Task<IActionResult> ActivateTeacher(int id)
+        {
+            var teacher = await _context.Teachers.FindAsync(id);
+            if (teacher == null)
+            {
+                return NotFound(new { message = "Không tìm thấy giảng viên" });
+            }
+
+            if (teacher.IsActive)
+            {
+                return BadRequest(new { message = "Giảng viên đang ở trạng thái hoạt động" });
+            }
+
+            teacher.IsActive = true;
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Khôi phục giảng viên thành công!",
+                studentId = teacher.AdminId,
+                isActive = teacher.IsActive
             });
         }
     }

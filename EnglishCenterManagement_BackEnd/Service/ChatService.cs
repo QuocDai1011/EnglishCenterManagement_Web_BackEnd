@@ -1,3 +1,4 @@
+
 ﻿using EnglishCenterManagement_BackEnd.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
@@ -106,5 +107,6 @@ Hãy tư vấn về khóa học, so sánh, và tư vấn lộ trình.
 
             return "Hệ thống đang quá tải. Vui lòng thử lại sau ít phút.";
         }
+
     }
 }
