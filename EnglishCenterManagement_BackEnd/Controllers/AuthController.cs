@@ -140,9 +140,15 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                string.IsNullOrWhiteSpace(req.Address) ||
                string.IsNullOrWhiteSpace(req.PhoneNumber) ||
                string.IsNullOrWhiteSpace(req.PhoneNumberOfParents) ||
-               string.IsNullOrWhiteSpace(req.Password))
+               string.IsNullOrWhiteSpace(req.Password) ||
+               string.IsNullOrWhiteSpace(req.ConfirmPassword))
             {
                 return BadRequest(new { message = "Vui lòng nhập đầy đủ thông tin" });
+            }
+
+            if(req.Password != req.ConfirmPassword)
+            {
+                return BadRequest(new { message = "Password and confirm password do not match" });
             }
 
             string email = req.Email.Trim();
@@ -187,6 +193,36 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             return Ok(new { message = "Đăng ký thành công! Bạn có thể đăng nhập ngay" });
         }
 
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] EmailRequest req)
+        {
+            if (string.IsNullOrWhiteSpace(req.Email))
+            {
+                return BadRequest(new { message = "Email trống" });
+            }
+
+            string email = req.Email.Trim();
+            bool emailExists = await _context.Students.AnyAsync(e => e.Email == email);
+            if (!emailExists)
+            {
+                return BadRequest(new { message = "Email không tồn tại trong CSDL" });
+            }
+            var otp = new Random().Next(100000, 999999).ToString();
+            _cache.Set(email, otp, TimeSpan.FromMinutes(3));
+
+            var body = $"<p>Mã OTP của bạn là: <b>{otp}</b></p><p>OTP có hiệu lực trong 3 phút.</p>";
+
+            try
+            {
+                await _emailService.SendEmailAsync(email, "Xác thực quên mật khẩu", body);
+                return Ok(new { message = "Đã gửi OTP qua Gmail." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Gửi OTP thất bại.", error = ex.Message });
+            }
+        }
+
 
         [HttpGet("currentuser")]
         [Authorize] // Bắt buộc phải đăng nhập (có Cookie) mới truy cập được
@@ -227,10 +263,12 @@ namespace EnglishCenterManagement_BackEnd.Controllers
 
             if (string.IsNullOrEmpty(email))
                 return BadRequest(new { message = "Email không được để trống." });
-
-            bool emailExists = await _context.Students.AnyAsync(s => s.Email == email);
-            if (emailExists)
-                return BadRequest(new { message = "Email đã tồn tại trong hệ thống." });
+            if(request.Mode != "resetPassword")
+            {
+                bool emailExists = await _context.Students.AnyAsync(s => s.Email == email);
+                if (emailExists)
+                    return BadRequest(new { message = "Email đã tồn tại trong hệ thống." });
+            }
 
             var otp = new Random().Next(100000, 999999).ToString();
             _cache.Set(email, otp, TimeSpan.FromMinutes(3));
@@ -262,6 +300,30 @@ namespace EnglishCenterManagement_BackEnd.Controllers
 
             return BadRequest(new { success = false, message = "OTP không hợp lệ hoặc đã hết hạn." });
         }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPassword req)
+        {
+            string email = req.Email.Trim();
+            var user = await _context.Students.FirstOrDefaultAsync(e => e.Email == email);
+            if (user == null)
+            {
+                return BadRequest(new { message = "Email không tồn tại trong CSDL" });
+            }
+
+            if (req.NewPassword != req.ConfirmPassword)
+            {
+                return BadRequest(new { message = "Mật khẩu xác nhận không giống" });
+            }
+
+            string hashPassword = BCrypt.Net.BCrypt.HashPassword(req.NewPassword);
+
+            user.Password = hashPassword;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Đặt lại mật khẩu thành công" });
+        }
     }
 
     public class OtpRequest
@@ -288,13 +350,21 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         public string PhoneNumber { get; set; }
         public string PhoneNumberOfParents { get; set; }
         public string Password { get; set; }
+        public string ConfirmPassword { get; set; }
     }
 
     public class EmailRequest
     {
         public string Email { get; set; }
+        public string Mode { get; set; }
     }
 
+    public class ResetPassword
+    {
+        public string Email { get; set; }
+        public string NewPassword { get; set; }
+        public string ConfirmPassword { get; set; }
+    }
 
 }
 
