@@ -28,12 +28,13 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             _emailService = emailService;
             _cache = cache;
         }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
             {
-                return BadRequest("Email và Password không được trống.");
+                return BadRequest(ErrorEnums.LACK_OF_FIELD);
             }
 
             string inputEmail = request.Email.Trim().ToLower();
@@ -74,7 +75,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                     .FirstOrDefaultAsync(s => s.Email == inputEmail && s.IsActive == true);
 
                 if (student == null)
-                    return Unauthorized("Email không tồn tại hoặc tài khoản bị vô hiệu hóa.");
+                    return Unauthorized(ErrorEnums.ACCOUNT_DISABLE_OR_NOTEXIST);
 
                 bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, student.Password);
                 if (!isPasswordValid)
@@ -87,7 +88,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
 
             if (user == null)
             {
-                return Unauthorized("Thông tin đăng nhập không hợp lệ hoặc tài khoản đã bị vô hiệu hóa.");
+                return Unauthorized(ErrorEnums.ACCOUNT_DISABLE_OR_NOTEXIST);
             }
 
             // --- 4. TẠO COOKIE XÁC THỰC ---
@@ -142,12 +143,12 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                string.IsNullOrWhiteSpace(req.PhoneNumberOfParents) ||
                string.IsNullOrWhiteSpace(req.Password))
             {
-                return BadRequest(new { message = "Vui lòng nhập đầy đủ thông tin" });
+                return BadRequest(ErrorEnums.LACK_OF_FIELD);
             }
 
             string email = req.Email.Trim();
             bool emailExists = await _context.Students.AnyAsync(s => s.Email == email);
-            if (emailExists) return BadRequest(new { message = "Email đã tồn tại trong hệ thống." });
+            if (emailExists) return BadRequest(ErrorEnums.USERNAME_EXIST);
 
             if (!_cache.TryGetValue(email + "_verified", out bool isOtpVerified) || !isOtpVerified)
                 return BadRequest(new { message = "Vui lòng xác thực OTP trước khi đăng ký." });
@@ -179,7 +180,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Lỗi máy chủ: " + ex.Message });
+                return Conflict(ErrorEnums.SERVER_ERROR);
             }
 
             _cache.Remove(email + "_verified");
@@ -195,7 +196,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             if (User.Identity?.IsAuthenticated != true)
             {
                 // Trường hợp này hiếm xảy ra do [Authorize] đã chặn, nhưng là fallback tốt
-                return Unauthorized(new { message = "Chưa đăng nhập hoặc phiên đã hết hạn." });
+                return Unauthorized(ErrorEnums.JWT_EXPIRED);
             }
 
             // Lấy thông tin từ Claims (đã lưu trong Cookie)
@@ -217,7 +218,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         public IActionResult AccessDenied()
         {
             // Endpoint được gọi khi người dùng có Cookie nhưng thiếu quyền (Role)
-            return StatusCode(403, new { message = "Bạn không có quyền truy cập vào tài nguyên này." });
+            return Unauthorized(ErrorEnums.TOKERN_NOT_ENOUGH_RIGHTS);
         }
 
         [HttpPost("send-otp")]
@@ -226,11 +227,11 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             var email = request.Email?.Trim();
 
             if (string.IsNullOrEmpty(email))
-                return BadRequest(new { message = "Email không được để trống." });
+                return BadRequest(ErrorEnums.LACK_OF_FIELD);
 
             bool emailExists = await _context.Students.AnyAsync(s => s.Email == email);
             if (emailExists)
-                return BadRequest(new { message = "Email đã tồn tại trong hệ thống." });
+                return BadRequest(ErrorEnums.USERNAME_EXIST);
 
             var otp = new Random().Next(100000, 999999).ToString();
             _cache.Set(email, otp, TimeSpan.FromMinutes(3));

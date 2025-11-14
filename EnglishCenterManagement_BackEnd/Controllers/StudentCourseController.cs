@@ -1,4 +1,5 @@
 ﻿using EnglishCenterManagement_BackEnd.Models;
+using EnglishCenterManagement_BackEnd.Utils;
 using GenerativeAI.Types;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -79,7 +80,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 .ToListAsync();
             if (studentCourse == null)
             {
-                return NotFound(new { message = "Không tìm thấy dữ liệu." });
+                return NotFound(ErrorEnums.NOT_FOUND);
             }
             return Ok(studentCourse);
         }
@@ -90,7 +91,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         {
             if (studentCourse == null)
             {
-                return BadRequest(new { message = "Dữ liệu không hợp lệ." });
+                return BadRequest(ErrorEnums.LACK_OF_FIELD);
             }
 
             var exist = await _context.StudentCourses.FindAsync(
@@ -116,11 +117,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
-                {
-                    message = "Lỗi server.",
-                    error = ex.InnerException?.Message ?? ex.Message
-                });
+                return Conflict(ErrorEnums.SERVER_ERROR);
             }
         }
 
@@ -132,7 +129,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
 
             if (studentCourse == null)
             {
-                return Conflict(new { message = "Không tìm thấy dữ liệu của học viên." });
+                return Conflict(ErrorEnums.NOT_FOUND_WITH_MODEL("Học viên"));
             }
 
             if (studentCourse.CourseId == newStudentCourse.CourseId)
@@ -148,12 +145,12 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 }
                 catch (Exception ex)
                 {
-                    return StatusCode(500, "Error: " + ex.Message);
+                    return Conflict(ErrorEnums.SERVER_ERROR);
                 }
             }
             else
             {
-                return Conflict(new { message = "Dữ liệu khoog thể cập nhật vì học viên chưa từng học khóa học này." });
+                return Conflict(new { message = "Dữ liệu không thể cập nhật vì học viên chưa học khóa học này." });
             }
         }
     }

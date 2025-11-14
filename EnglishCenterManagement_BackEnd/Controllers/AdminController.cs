@@ -1,5 +1,6 @@
 ﻿using EnglishCenterManagement_BackEnd.Models;
 using EnglishCenterManagement_BackEnd.Service;
+using EnglishCenterManagement_BackEnd.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -23,13 +24,13 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         public async Task<IActionResult> GetByUsername([FromBody] string username)
         {
             if (string.IsNullOrEmpty(username))
-                return BadRequest("Username is required.");
+                return BadRequest(ErrorEnums.LACK_OF_FIELD);
 
             var student = await _context.Admins
                 .FirstOrDefaultAsync(s => s.UserName == username);
 
             if (student == null)
-                return NotFound("Admin not found.");
+                return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Admin"));
 
             return Ok(student);
         }
@@ -39,19 +40,19 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Email))
-                return BadRequest("Username is required.");
+                return BadRequest(ErrorEnums.LACK_OF_FIELD);
 
             if (string.IsNullOrWhiteSpace(request.Password))
-                return BadRequest("Password is required.");
+                return BadRequest(ErrorEnums.LACK_OF_FIELD);
 
             var admin = await _context.Admins
                 .FirstOrDefaultAsync(s => s.Email == request.Email);
 
             if (admin == null)
-                return NotFound("Admin not found.");
+                return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Admin"));
 
             if (admin.Password != request.Password)
-                return BadRequest("Mật khẩu không chính xác.");
+                return BadRequest(ErrorEnums.VALIDATION_FAIL);
 
             return Ok(new
             {
@@ -78,7 +79,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             var admin = await _context.Admins.FindAsync(id);
             if (admin == null)
             {
-                return NotFound(new { message = "Don't find this admin's information." });
+                return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Admin"));
             }
 
             return Ok(admin);
@@ -90,14 +91,14 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         {
             if (newAdmin == null)
             {
-                return BadRequest(new { message = "Admin's data is required." });
+                return BadRequest(ErrorEnums.LACK_OF_FIELD);
             }
 
             var exist = await _context.Admins.AnyAsync(a => a.UserName == newAdmin.UserName);
 
             if (exist)
             {
-                return Conflict(new { message = "This admin's username exists" });
+                return Conflict(ErrorEnums.USERNAME_EXIST);
             }
             else
             {
@@ -111,7 +112,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 }
                 catch (Exception ex)
                 {
-                    return StatusCode(500, $"Internal server error: {ex.Message}");
+                    return BadRequest(ErrorEnums.SERVER_ERROR);
                 }
             }
         }
@@ -124,18 +125,18 @@ namespace EnglishCenterManagement_BackEnd.Controllers
 
             if (admin == null)
             {
-                return NotFound(new { message = "Don't find this admin's infomation." });
+                return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Admin"));
             }
 
             try
             {
                 _context.Admins.Remove(admin);
                 await _context.SaveChangesAsync();
-                return Ok("Delete admin's infomation success!");
+                return Ok("Xóa thành công.");
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return Conflict(ErrorEnums.SERVER_ERROR);
             }
         }
 
@@ -146,7 +147,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             var admin = await _context.Admins.FindAsync(id);
             if (admin == null)
             {
-                return NotFound(new { message = "Don't find this admin's information." });
+                return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Admin"));
             }
 
             try
@@ -154,10 +155,10 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 admin = AdminService.Mapper(admin, newAdmin);
                 _context.Admins.Update(admin);
                 await _context.SaveChangesAsync();
-                return Ok(new {message = "Update the admin's information success!"});
+                return Ok(new {message = "Cập nhật dữ liệu thành công."});
             }
             catch (Exception ex) { 
-                return StatusCode(500, "Error: " + ex.Message);
+                return Conflict(ErrorEnums.SERVER_ERROR);
             }
         }
 
@@ -168,12 +169,12 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             var admin = await _context.Admins.FindAsync(id);
             if (admin == null)
             {
-                return NotFound(new { message = "Không tìm thấy admin" });
+                return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Admin"));
             }
 
             if (!admin.IsActive)
             {
-                return BadRequest(new { message = "Admin đã bị xóa trước đó" });
+                return BadRequest(ErrorEnums.DATA_REMOVED);
             }
 
             if(admin.IsSuper)
@@ -199,7 +200,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             var teacher = await _context.Teachers.FindAsync(id);
             if (teacher == null)
             {
-                return NotFound(new { message = "Không tìm thấy admin" });
+                return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Admin"));
             }
 
             if (teacher.IsActive)

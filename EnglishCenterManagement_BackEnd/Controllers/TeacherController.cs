@@ -1,8 +1,10 @@
 ﻿using EnglishCenterManagement_BackEnd.Models;
 using EnglishCenterManagement_BackEnd.Service;
+using EnglishCenterManagement_BackEnd.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Ocsp;
 
 namespace EnglishCenterManagement_BackEnd.Controllers
 {
@@ -33,7 +35,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             var teacher = await _context.Teachers.FindAsync(id);
             if (teacher == null)
             {
-                return NotFound("Không tìm thấy giảng viên có id là " + id);
+                return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Giảng viên"));
             }
             return Ok(teacher);
         }
@@ -44,14 +46,14 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         {
             if (teacher == null)
             {
-                return BadRequest("Thông tin giảng viên không được trống!");
+                return BadRequest(ErrorEnums.LACK_OF_FIELD);
             }
 
             var exist = await _context.Teachers.AnyAsync(t => t.UserName == teacher.UserName);
 
             if (exist)
             {
-                return Conflict("Username đã tồn tại, vui lòng chọn tên khác.");
+                return Conflict(ErrorEnums.USERNAME_EXIST);
             }
             else
             {
@@ -65,7 +67,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 }
                 catch (Exception ex)
                 {
-                    return StatusCode(500, $"Internal server error: {ex.Message}");
+                    return Conflict(ErrorEnums.SERVER_ERROR);
                 }
             }
         }
@@ -77,7 +79,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             var teacher = await _context.Teachers.FindAsync(id);
             if(teacher == null)
             {
-                return NotFound(new {message = "Không tìm thấy thông tin giảng viên."});
+                return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Giảng viên"));
             }
 
             try
@@ -87,7 +89,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 return Ok("Xóa giảng viên thành công.");
             }catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return Conflict(ErrorEnums.SERVER_ERROR);
             }
             
         }
@@ -99,7 +101,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             var teacher = await _context.Teachers.FindAsync(id);
             if(teacher == null)
             {
-                return NotFound("Không tìm thấy thông tin giảng viên.");
+                return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Giảng viên"));
             }
 
             teacher = TeacherService.Mapper(teacher, newTeacher);
@@ -116,13 +118,13 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         public async Task<IActionResult> GetByUsername([FromBody] string username)
         {
             if (string.IsNullOrEmpty(username))
-                return BadRequest("Username is required.");
+                return BadRequest(ErrorEnums.LACK_OF_FIELD);
 
             var student = await _context.Teachers
                 .FirstOrDefaultAsync(s => s.UserName == username);
 
             if (student == null)
-                return NotFound("Teacher not found.");
+                return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Giảng viên"));
 
             return Ok(student);
         }
@@ -132,16 +134,16 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Email))
-                return BadRequest("Username is required.");
+                return BadRequest(ErrorEnums.LACK_OF_FIELD);
 
             if (string.IsNullOrWhiteSpace(request.Password))
-                return BadRequest("Password is required.");
+                return BadRequest(ErrorEnums.LACK_OF_FIELD);
 
             var teacher = await _context.Teachers
                 .FirstOrDefaultAsync(s => s.UserName == request.Email);
 
             if (teacher == null)
-                return NotFound("Teacher not found.");
+                return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Giảng viên"));
 
             if (teacher.Password != request.Password)
                 return BadRequest("Mật khẩu không chính xác.");
@@ -163,12 +165,12 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             var teacher = await _context.Teachers.FindAsync(id);
             if (teacher == null)
             {
-                return NotFound(new { message = "Không tìm thấy giảng viên" });
+                return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Giảng viên"));
             }
 
             if (!teacher.IsActive)
             {
-                return BadRequest(new { message = "Giảng viên đã bị xóa trước đó" });
+                return BadRequest(ErrorEnums.DATA_REMOVED);
             }
 
             teacher.IsActive = false;
@@ -189,7 +191,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             var teacher = await _context.Teachers.FindAsync(id);
             if (teacher == null)
             {
-                return NotFound(new { message = "Không tìm thấy giảng viên" });
+                return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Giảng viên"));
             }
 
             if (teacher.IsActive)

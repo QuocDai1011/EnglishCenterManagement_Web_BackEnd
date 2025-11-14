@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EnglishCenterManagement_BackEnd.Service;
+using EnglishCenterManagement_BackEnd.Utils;
 
 namespace EnglishCenterManagement_BackEnd.Controllers
 {
@@ -30,7 +31,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         {
             var course = await _context.Courses.FindAsync(id);
 
-            if (course == null) return NotFound("Không tìm thấy dữ liệu khóa học!");
+            if (course == null) return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Khóa học"));
 
             return Ok(course);
         }
@@ -41,7 +42,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         {
             if (newCourse == null)
             {
-                return BadRequest("Course's data is required!");
+                return BadRequest(ErrorEnums.LACK_OF_FIELD);
             }
 
             try
@@ -53,7 +54,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 return CreatedAtAction(nameof(GetById), new { id = newCourse.CourseId }, newCourse);
             }
             catch (Exception ex) {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return Conflict(ErrorEnums.SERVER_ERROR);
             }
         }
 
@@ -63,7 +64,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         {
             var course = await _context.Courses.FindAsync(id);
 
-            if (course == null) return NotFound("Không tìm thấy khóa học để xóa!");
+            if (course == null) return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Khóa học"));
 
             try
             {
@@ -73,7 +74,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return Conflict(ErrorEnums.SERVER_ERROR);
             }
         }
 
@@ -82,7 +83,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         public async Task<IActionResult> Update(int id, [FromBody] Course updatedCourse)
         {
             var course = await _context.Courses.FindAsync(id);
-            if (course == null) return NotFound("Không tìm thấy dữ liệu khóa học!");
+            if (course == null) return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Lớp học"));
 
             try
             {

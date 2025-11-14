@@ -1,5 +1,6 @@
 ﻿using EnglishCenterManagement_BackEnd.Models;
 using EnglishCenterManagement_BackEnd.Service;
+using EnglishCenterManagement_BackEnd.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -36,7 +37,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                .FirstOrDefaultAsync(c => c.ClassId == id);
 
             if (classWithCourses == null)
-                return NotFound("Không tìm thấy lớp học!");
+                return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Lớp học"));
 
             return Ok(classWithCourses.Courses);
         }
@@ -54,7 +55,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         public async Task<IActionResult> Create([FromBody] Class newClass)
         {
             if (newClass == null) { 
-                return BadRequest("Class' data is required!");
+                return BadRequest(ErrorEnums.LACK_OF_FIELD);
             }
 
             try
@@ -66,7 +67,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 return CreatedAtAction(nameof(GetById), new {id = newClass.ClassId}, newClass);
             }
             catch (Exception ex) {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return Conflict(ErrorEnums.SERVER_ERROR);
             }
         }
 
@@ -75,7 +76,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var _class = await _context.Classes.FindAsync(id);
-            if(_class == null) return NotFound("Không tìm thấy dữ liệu lớp học!");
+            if(_class == null) return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Lớp học"));
 
             try
             {
@@ -84,7 +85,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 return Ok("Xóa lớp học thành công");
             }
             catch (Exception ex) {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return Conflict(ErrorEnums.SERVER_ERROR);
             }
 
         }
@@ -95,7 +96,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
         {
             var _class = await _context.Classes.FindAsync(id);
 
-            if (_class == null) return NotFound("Không tìm thấy dữ liệu lớp học!");
+            if (_class == null) return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Lớp học"));
 
             try
             {
@@ -131,7 +132,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 }
                 )
                 .ToListAsync();
-            if (studentClasses == null) return NotFound("Không tìm thấy dữ liệu!");
+            if (studentClasses == null) return NotFound(ErrorEnums.NOT_FOUND_WITH_MODEL("Lớp học"));
 
             return Ok(studentClasses);
         }
@@ -161,7 +162,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 })
                 .ToListAsync();
 
-            if (classCourses == null) return NotFound(new {message = "Không tìm thấy dữ liệu."});
+            if (classCourses == null) return NotFound(ErrorEnums.NOT_FOUND);
             return Ok(classCourses);
         }
 
@@ -190,7 +191,7 @@ namespace EnglishCenterManagement_BackEnd.Controllers
                 })
                 .ToListAsync();
 
-            if (classTeacher == null) return NotFound(new { message = "Không tìm thấy dữ liệu." });
+            if (classTeacher == null) return NotFound(ErrorEnums.NOT_FOUND);
             return Ok(classTeacher);
         }
         
